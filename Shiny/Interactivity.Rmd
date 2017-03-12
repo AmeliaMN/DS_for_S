@@ -12,8 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 - manipulate package
 ```{r, eval=FALSE}
 library(manipulate)
+library(ggplot2)
 ```
 
+```{r}
+manipulate(
+  ggplot(data=diamonds, aes(x=carat)) + geom_histogram(binwidth=binselect),
+binselect = slider(min=0.5,max=1,initial=0.7, step=0.01)
+)
+
+```
 - [shiny](http://shiny.rstudio.com/tutorial/lesson1/) 
 ```{r, eval=FALSE}
 library(shiny)
