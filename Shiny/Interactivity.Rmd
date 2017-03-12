@@ -1,0 +1,19 @@
+---
+title: "Interactivity"
+author: "Amelia McNamara"
+date: "3/12/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- manipulate package
+```{r, eval=FALSE}
+library(manipulate)
+```
+
+- [shiny](http://shiny.rstudio.com/tutorial/lesson1/) 
+```{r, eval=FALSE}
+library(shiny)
