@@ -15,7 +15,10 @@ library(manipulate)
 library(ggplot2)
 ```
 
-```{r}
+- only works in RStudio
+- allows for interactive controls when coding
+
+```{r, eval=FALSE}
 manipulate(
   ggplot(data=diamonds, aes(x=carat)) + geom_histogram(binwidth=binselect),
 binselect = slider(min=0.5,max=1,initial=0.7, step=0.01)
@@ -25,3 +28,7 @@ binselect = slider(min=0.5,max=1,initial=0.7, step=0.01)
 - [shiny](http://shiny.rstudio.com/tutorial/lesson1/) 
 ```{r, eval=FALSE}
 library(shiny)
+```
+
+- Sharing shiny apps
+- [shinyapps.io](http://www.shinyapps.io/)
