@@ -32,4 +32,4 @@
 #### Data science at the undergraduate level
 - [Undergraduate data science guidelines](http://www.amstat.org/asa/files/pdfs/EDU-DataScienceGuidelines.pdf) from the Park City Math Institute, accepted by the ASA.
 - [Smith College major in data science](https://www.smith.edu/statistics/major.php), one of the first majors in data science. 
-- [DataFest](http://ww2.amstat.org/education/datafest/index.cfm), , a hackathon for undergraduates. Many around the country, including the [FiveCollege DataFest](http://www.science.smith.edu/datafest/). Go volunteer, or host your own!
+- [DataFest](http://ww2.amstat.org/education/datafest/index.cfm), a hackathon for undergraduates. Many around the country, including the [FiveCollege DataFest](http://www.science.smith.edu/datafest/). Go volunteer, or host your own!
