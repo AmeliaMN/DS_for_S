@@ -1,0 +1,1 @@
+These apps are hosted on [my shiny server](http://45.55.32.181/shiny) if you want to see them on the web. If you are interested in hosting your own shiny server, you may want to [read Dean Attali's tutorial about how to set up Shiny Server on DigitalOcean](http://deanattali.com/2015/05/09/setup-rstudio-shiny-server-digital-ocean/). 

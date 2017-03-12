@@ -1,0 +1,213 @@
+---
+title: "What are the chances my name is Amanda?"
+author: "Amelia McNamara"
+date: "January 13, 2017"
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width=10)
+```
+
+I get called Amanda a lot. This tends to drive me crazy, because I think my real name is much more interesting. But, I realized recently that given the prior probabilities, it's actually a very reasonable thing to call me. 
+
+To investigate this using data, I am using the `babynames` R package, which has data from the Social Security Administration. [If you want to follow along with my analysis, all the [code is on GitHub](https://github.com/AmeliaMN/shiny-server/blob/master/Amanda/Amanda.Rmd).] The `babynames` data includes all names that had at least 5 uses for a particular gender in a given year. Obviously, that leaves some people out, but actually this data includes most (documented) people in the United States. For more about this, see my data appendix. 
+
+The basic idea is to take my (approximate) age and see how likely it is that my name is Amanda. I look incredibly young, but given that I have a PhD and am a statistics professor, there's a lower bound on how young I could really be. Lets assume that people talking to me believe I was born between **1980-1989**, inclusive. So the question is, given that I was born then, **what are the chances my name is Amanda?**
+
+In a blog post at the beginning of last semester, [Mine](http://www2.stat.duke.edu/~mc301/) [linked](http://citizen-statistician.org/2016/08/13/a-timely-first-day-of-class-example-for-fall-2016-trump-tweets/) to a 538 article from 2014 that approaches the problem from the other side-- [How to tell someone's age when all you know is her name](http://fivethirtyeight.com/features/how-to-tell-someones-age-when-all-you-know-is-her-name/). Interestingly, although using this method would help confirm people's suspicions that I'm a child (the $Age|Name$ method would estimate I'm [about 13 years old](http://rhiever.github.io/name-age-calculator/index.html?Gender=F&Name=Amelia)), that's not how people tend to think about names and ages. 
+
+```{r, message=FALSE}
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(knitr)
+library(forcats)
+# library(devtools)
+# install_github("yihui/printr")
+# install_github("hadley/babynames")
+
+library(babynames)
+library(printr)
+
+data(babynames)
+```
+
+```{r, amelias}
+amelia <- babynames %>%
+  filter(name=="Amelia") %>%
+  filter(sex == "F") %>%
+  filter(year > 1926) %>%
+  mutate(totamels = cumsum(n))
+ggplot(amelia) + geom_line(aes(x=year, y=n)) + ylab("Number of girl babies named Amelia") +xlab("") + scale_x_continuous(breaks = seq(from=1880, to = 2010, by = 10))
+```
+
+Instead, people seem to be taking an approximate age and then just grabbing a name out of the hat. In other words, they are using the $Name|Age$ method. With that in mind, let's see how likely Amanda really is. I'm focusing just on girls names for this analysis, mostly because Amelia isn't a common boy's name (see my data appendix). 
+
+In the eighties, numbers for Amanda and Amelia were as follows:
+
+```{r}
+eighties <- babynames %>%
+  filter(year > 1979 & year < 1990 & sex == "F") 
+
+nameprops <- eighties %>%
+  group_by(name) %>%
+  summarize(number = sum(n)) %>%
+  mutate(proportion=number/sum(number)) 
+nameprops %>%
+  filter(name == "Amanda" | name == "Amelia")
+```
+
+Armed only with the information that I was born between 1985 and 1989, there's a **2% chance my name is Amanda**. That's actually pretty incredible! (In contrast, there's just a 0.05% chance my name is Amelia.) And, we can figure most people remember at least the first letter of a name. So, what if we add the fact that my name starts with an A?
+
+In the eighties, numbers for Amanda and Amelia (out of all A names) were as follows:
+
+```{r}
+eightiesA <- eighties %>%
+  mutate(startswith = substring(name, 1,1)) %>%
+  filter(startswith == "A") %>%
+  group_by(name) %>%
+  summarize(number = sum(n)) %>%
+  mutate(proportion=number/sum(number))
+
+eightiesA %>% select(name, proportion) %>%
+  filter(name ==  "Amanda" | name ==  "Amelia" ) 
+```
+
+Now, there's a **15.7% chance my name is Amanda** (and a 0.4% chance my name is Amelia). The only A name that was more popular than Amanda in the eighties was Ashley, which made up 19.5% of the female names starting with A. Of course, Ashley doesn't have as similar of a sound to Amelia as Amanda does. I didn't go this far, but we could also look at the names starting with Am-- I think this would serve to solidify Amanda as the much more likely choice. 
+
+So, for those of you that have felt bad about getting my name wrong in the past-- the data supports you! 
+
+I'm not sure if doing this analysis has made me feel better about being called Amanda-- for that, I just tell myself **"they're probably mixing me up with [Amanda Cox](http://www.nytco.com/amanda-cox-named-editor-the-upshot/)."**
+
+## Your name
+Does this trend hold up with the name people are always calling you? Are you a Jacob that always gets called Jason? A Kirstin that gets called Kristen? (I'm guilty of that one.)
+
+
+```{r}
+data(babynames)
+babynames <- babynames %>%
+  mutate(startswith = substring(name, 1,1)) %>%
+  filter(year>1929) %>%
+  mutate(decade = substring(year, 3,3)) %>%
+  mutate(decade = factor(decade)) %>%
+  mutate(decade = fct_recode(decade, 
+                             twothousands = "0",
+                             twentytens = "1", 
+                             thirties = "3",
+                             fourties = "4", 
+                             fifties = "5", 
+                             sixties = "6", 
+                             seventies = "7",
+                             eighties = "8",
+                             nineties = "9"))
+
+selectInput("decadechoice",
+            "Babies born in",
+            c("any decade" = "any",
+              "1930s" = "thirties",
+              "1940s"= "fourties",
+              "1950s" = "fifties",
+              "1960s" = "sixties",
+              "1970s" = "seventies",
+              "1980s" = "eighties",
+              "1990s" = "nineties",
+              "2000s" = "twothousands",
+              "2010s" = "twentytens"),
+            selected = "eighties")
+selectInput("firstletter",
+            "Names starting with",
+            c("any letter" = "any", "A"="A", "B" = "B", "C" = "C", "D"= "D", "E" = "E", "F" = "F", "G" = "G", "H" = "H", "I" = "I", "J" = "J", "K" = "K", "L" = "L", "M"= "M", "N"="N", "O"= "O", "P"= "P", "Q"="Q", "R" = "R", "S" = "S", "T"="T", "U"= "U", "V"="V", "W"="W", "X"="X", "Y"="Y", "Z"="Z"),
+            selected = "A")
+radioButtons("gender",
+             "Gender",
+             c("Any gender" = "any", "M"="M", "F"="F"),
+             selected = "F")
+textInput("comparename", 
+          "What are the chances my name is ",
+          "Amelia")
+
+renderUI({
+  relevantdata <- babynames  %>%
+    {if(input$firstletter != "any") filter(., startswith == input$firstletter) else .} %>%
+    {if(input$decadechoice != "any") filter(., decade == input$decadechoice) else .} %>%
+    {if(input$gender != "any") filter(., sex == input$gender) else .} %>%
+    group_by(name)  %>%
+    summarize(number = sum(n)) %>%
+    mutate(proportion = round((number / sum(number) * 100), digits=2)) %>%
+   filter(name == input$comparename)
+  
+  gb <- ifelse(input$gender == "F", "baby girls", ifelse(input$gender == "M", "baby boys","babies"))
+  de <- ifelse(input$decadechoice == "any", "any decade", paste("the", input$decadechoice))
+  al <- ifelse(input$firstletter == "any", "any letter", input$firstletter)
+  
+  HTML(paste0("About ", relevantdata$proportion, "% of ", gb, " born in ", de, " with names starting with ", al, " were named ", input$comparename ))
+  # generate bins based on input$bins from ui.R
+  
+})
+```
+
+
+
+## Data appendix 
+I can get off-track when doing analyses, so here are a couple more thoughts. 
+
+### How full is the data?
+One thing I was worried about was how well the data really represented the population. Uncommon names are excluded for privacy purposes, and I thought maybe people were getting more (or less) creative with names over time. It turns out that may be the case, but only slightly.
+
+```{r, missingdata}
+totals <- babynames %>%
+  group_by(year, sex) %>%
+  summarize(missingprop = (1-sum(prop))*100, totdata=sum(n)) %>%
+  filter(sex == "F")
+# applicants2 <- applicants %>%
+#   group_by(year) %>%
+#   summarize(tot=sum(n_all))
+# totals <- totals %>%
+#   left_join(applicants2,by = "year") 
+# totals <- totals %>%
+#   mutate(prop = totdata/tot)
+
+ggplot(totals) + geom_line(aes(x=year, y=missingprop)) + ylim(0, 25) + ylab("Proportion of people missing from data") + xlab("") + scale_x_continuous(breaks=seq(from=1880, to=2010, by=20))
+```
+
+```{r}
+summary(totals$missingprop)
+```
+
+On average, only 5% of people are missing from the data. That feels pretty good to me. The article mentioned above, 538 estimated that only 1% of the data was missing, which I'm not sure how they estimated.
+
+### How many baby boys are named Amelia?
+Answer-- not many. In 2004, the year with the most male Amelias, 14 baby boys were named Amelia. Or, someone checked the wrong box on a birth certificate. 
+
+```{r}
+babynames %>%
+  filter(name=="Amelia") %>%
+  filter(sex == "M") %>%
+  filter(n == max(n)) %>%
+  select(year, sex, name, n)
+```
+
+### Creativity in naming
+Of course, there's a lot deeper I could dig on this analysis. Just by scrolling through the data I noticed there are many other ways to spell Amanda, which didn't get taken into account. (Maybe the creative spellings of Amelia balance it out.)
+
+```{r}
+nameprops %>%
+  filter(name == "Amanda" | name == "Aamanda" | name == "Amannda"  | name == "Amandah" | name == "Amamda")
+```
+
+### A is for eighties
+You can actually see the eighties pretty clearly when you look at plots of letters names start with. Girls' names starting with A had been on the rise since the 1960s, but you see a local maximum in about 1984 and then a small decline before continuing to rise. 
+
+```{r, nameletters}
+letternum <- babynames %>%
+  filter(sex=="F") %>%
+  mutate(startswith = substring(name, 1,1)) %>%
+  group_by(year, startswith) %>%
+  summarize(tot=sum(n), totprop = sum(prop))
+ggplot(letternum) + geom_line(aes(x=year, y=totprop))  +facet_wrap(~startswith) + ylab("Proportion of names starting with letter") + xlab("")
+filter(letternum, startswith=="A") %>% ggplot()+ geom_line(aes(x=year, y=totprop)) + scale_x_continuous(breaks = seq(from=1880, to = 2010, by = 20)) + ylab("Proportion of names starting with A") +xlab("")
+```
+
