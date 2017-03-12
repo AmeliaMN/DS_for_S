@@ -8,15 +8,42 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+## Reproducible research
+
+- Karl Broman on [reproducible research](http://kbroman.org/steps2rr/)
+
 ## RMarkdown
 - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax)
 - [knitr options](https://yihui.name/knitr/options/)
+- .Rmd is RMarkdown, .Rnw is R and LaTeX
 
+- You can use LaTeX
+\[
+\frac{var(\epsilon_i)}{var({y_i})}
+\]
+
+- [Bookdown](https://bookdown.org/yihui/bookdown/)
+- To knit to a different format,
+
+```{r, eval=FALSE}
+?knit
+```
+
+- To pull out code,
+
+```{r, eval=FALSE}
+?purl
+```
 
 ## git 
 - git can check the difference between two text/code files
 - track changes in those files
 - commandline tool
+- can use locally without GitHub
 - [Happy git with R](http://happygitwithr.com/)
 
+## GitHub 
+- a way to share code
+- can use Upload button to share code without commandline tool of git
 + [Free private GitHub repos for education](https://education.github.com/)

@@ -2,7 +2,7 @@
 title: "ggplot2 tutorial"
 author: "Amelia McNamara"
 date: "March 12, 2017"
-output: html_document
+output: pdf_document
 ---
 
 ## R graphics
@@ -30,6 +30,7 @@ First, we need to install and load ggplot2 the package,
 #install.packages("ggplot2")
 library(ggplot2)
 ```
+
 
 
 ## Diamonds data
