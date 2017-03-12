@@ -1,0 +1,9 @@
+base
+knitr
+ggplot2
+lubridate
+dplyr
+bindrcpp
+scales
+RColorBrewer
+readr

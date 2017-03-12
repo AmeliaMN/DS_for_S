@@ -2,7 +2,7 @@
 title: "ggplot2 tutorial"
 author: "Amelia McNamara"
 date: "March 12, 2017"
-output: slidy_presentation
+output: html_document
 ---
 
 ## R graphics
@@ -25,11 +25,12 @@ opts_chunk$set(cache=TRUE, warning=FALSE, message=FALSE, fig.align='center')
 ```
 
 ## Getting started
-First, we need to install and load the package,
+First, we need to install and load ggplot2 the package,
 ```{r}
 #install.packages("ggplot2")
 library(ggplot2)
 ```
+
 
 ## Diamonds data
 To start, I'm going to use the diamonds data that comes with ggplot2,
@@ -41,7 +42,7 @@ str(diamonds)
 
 ## qplot()-- the easy way out
 ```{r, plot.height=2}
-qplot(carat, data=diamonds)
+qplot(x=carat, data=diamonds)
 ```
 
 ## ggplot2 syntax
@@ -270,6 +271,9 @@ We see from our stats function that the **median (298,512)** is significantly lo
 The `ggplot` library has many charting capabilities, but `qplot()` function is the quickest way to quickly visualize your data. Let's make a histogram of *COST_SUM*.
 
 ```{r}
+library(readr)
+docs <- read_csv("../Data/PartD_Providers.csv")
+
 qplot(COST_SUM, data = docs)
 ```
 

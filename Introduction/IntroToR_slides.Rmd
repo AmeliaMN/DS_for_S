@@ -339,7 +339,7 @@ You can also accomplish the same thing in one "step" by chaining together multip
 
 ```{r}
 state_docs <- docs %>%
-  group_by(CITY, STATE)%>%
+  group_by(CITY, STATE) %>%
   summarise(count = n(),
             median_cost = median(COST_SUM),
             total_cost = sum(COST_SUM),

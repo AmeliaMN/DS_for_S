@@ -1,0 +1,20 @@
+---
+title: "Reproducible Research"
+author: "Amelia McNamara"
+date: "3/12/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## RMarkdown
+- [Markdown syntax](http://daringfireball.net/projects/markdown/syntax)
+- [knitr options](https://yihui.name/knitr/options/)
+
+
+## git 
+- git can check the difference between two text/code files
+- track changes in those files
+- commandline tool
+- [Happy git with R](http://happygitwithr.com/)
