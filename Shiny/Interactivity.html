@@ -122,19 +122,32 @@ $(document).ready(function () {
 </div>
 
 
-<ul>
-<li>manipulate package</li>
-</ul>
+<div id="manipulate-package" class="section level2">
+<h2>manipulate package</h2>
 <pre class="r"><code>library(manipulate)
 library(ggplot2)</code></pre>
+<ul>
+<li>only works in RStudio</li>
+<li>allows for interactive controls when coding</li>
+</ul>
 <pre class="r"><code>manipulate(
   ggplot(data=diamonds, aes(x=carat)) + geom_histogram(binwidth=binselect),
 binselect = slider(min=0.5,max=1,initial=0.7, step=0.01)
 )</code></pre>
+</div>
+<div id="shiny" class="section level2">
+<h2>Shiny</h2>
 <ul>
-<li><a href="http://shiny.rstudio.com/tutorial/lesson1/">shiny</a></li>
+<li><a href="http://shiny.rstudio.com/tutorial/lesson1/">shiny tutorial from RSTudio</a></li>
 </ul>
 <pre class="r"><code>library(shiny)</code></pre>
+<ul>
+<li>Sharing shiny apps</li>
+<li>Email the server.R and ui.R files to your colleagues</li>
+<li>host on <a href="http://www.shinyapps.io/">shinyapps.io</a></li>
+<li>Your own server, for example on <a href="http://deanattali.com/2015/05/09/setup-rstudio-shiny-server-digital-ocean/">digital ocean</a></li>
+</ul>
+</div>
 
 
 

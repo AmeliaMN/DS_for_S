@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-- manipulate package
+## manipulate package
 ```{r, eval=FALSE}
 library(manipulate)
 library(ggplot2)
@@ -23,12 +23,17 @@ manipulate(
   ggplot(data=diamonds, aes(x=carat)) + geom_histogram(binwidth=binselect),
 binselect = slider(min=0.5,max=1,initial=0.7, step=0.01)
 )
-
 ```
-- [shiny](http://shiny.rstudio.com/tutorial/lesson1/) 
+
+## Shiny
+
+- [shiny tutorial from RSTudio](http://shiny.rstudio.com/tutorial/lesson1/) 
+
 ```{r, eval=FALSE}
 library(shiny)
 ```
 
 - Sharing shiny apps
-- [shinyapps.io](http://www.shinyapps.io/)
+  - Email the server.R and ui.R files to your colleagues
+  - host on [shinyapps.io](http://www.shinyapps.io/)
+  - Your own server, for example on [digital ocean](http://deanattali.com/2015/05/09/setup-rstudio-shiny-server-digital-ocean/)
