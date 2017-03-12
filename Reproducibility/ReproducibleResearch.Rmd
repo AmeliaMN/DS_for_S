@@ -18,3 +18,5 @@ knitr::opts_chunk$set(echo = TRUE)
 - track changes in those files
 - commandline tool
 - [Happy git with R](http://happygitwithr.com/)
+
++ [Free private GitHub repos for education](https://education.github.com/)
