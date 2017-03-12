@@ -1,0 +1,71 @@
+---
+title: "Untitled"
+author: "Amelia McNamara"
+date: "3/11/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+## Working with geographic data
+
+```{r}
+#install.packages("ggmap")
+library(ggmap)
+```
+
+## 
+```{r}
+str(crime) # crime data from ggmap package
+library(mosaic)
+```
+
+## 
+```{r}
+midlat <- mean(~lat, data=crime, na.rm=TRUE)
+midlon <- mean(~lon, data=crime, na.rm=TRUE)
+m1 <- get_map(source='stamen', location=c(midlon, midlat), 
+              maptype="watercolor", zoom=11)
+p4 <- ggmap(m1)
+p4 
+```
+
+## With points
+```{r}
+p4 + geom_point(aes(x=lon, y=lat), data=crime)
+```
+
+##
+```{r}
+p4 + 
+  coord_cartesian() +
+  geom_hex(aes(x=lon, y=lat), data=crime, alpha=0.8) + 
+  guides(fill=guide_legend(alpha=0.5, title="Number of crimes")) + 
+  xlab("") + ylab("") + theme(axis.line=element_blank(), 
+                              axis.text=element_blank(), 
+                              axis.ticks=element_blank(),
+                              axis.title=element_blank())
+```
+
+
+```{r, echo=FALSE}
+p4 <- p4 + 
+  coord_cartesian() +
+  geom_hex(aes(x=lon, y=lat), data=crime, alpha=0.8) + 
+  guides(fill=guide_legend(alpha=0.5, title="Number of crimes")) + 
+  xlab("") + ylab("") + theme(axis.line=element_blank(), 
+                              axis.text.x=element_blank(), 
+                              axis.text.y=element_blank(), 
+                              axis.ticks=element_blank(),
+                              axis.title.x=element_blank(), 
+                              axis.title.y=element_blank())
+```
+
+```{r, eval=FALSE}
+ggsave("beautiful_hex_map.jpg", plot=p4)
+```

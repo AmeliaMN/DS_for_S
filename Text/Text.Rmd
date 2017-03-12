@@ -1,0 +1,241 @@
+---
+title: "Text"
+author: "Amelia McNamara"
+date: "August 16, 2016"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, cache=TRUE, warning=FALSE)
+```
+
+## Overview so far
+- On day one, we talked basics of data viz
+- Day two was interactivity (in d3)
+- Today we're talking scraping, text, and timelines
+
+## Interactivity in R
+- Shiny
+- manipulate
+- Shiny gadgets
+
+## Getting data from the web
+- Application Programming Interfaces (APIs)
+- Scraping
+
+We'll go through some of Scott, Karthik, and Garrett's [useR tutorial](https://github.com/AmeliaMN/user2016-tutorial/). I'll flip through the API stuff, and we'll focus on scraping. 
+
+## Scraping!
+
+We're switching over to the useR tutorial by Scott, Karthik, and Garrett. 
+
+See it here: [useR tutorial](https://github.com/AmeliaMN/user2016-tutorial/).
+
+# Some text
+
+## Loading data
+This is the data [I mentioned](http://www.science.smith.edu/~amcnamara/SummerDataViz.html) from [Kaylin Walker's analysis](http://kaylinwalker.com/50-years-of-pop-music/). 
+
+(I got the URL right this time-- notice it starts with `raw`.)
+
+```{r}
+library(RCurl)
+library(readr)
+webData <- getURL("https://raw.githubusercontent.com/walkerkq/musiclyrics/master/billboard_lyrics_1964-2015.csv")
+lyrics <- read_csv(webData)
+dim(lyrics)
+```
+
+## string manipulations
+
+```{r}
+library(dplyr)
+library(stringr)
+beatles <- lyrics %>%
+  filter(str_detect(Artist, "beatles"))
+dim(beatles)
+```
+
+## Now you -- find all the songs containing "love"
+
+(How much smaller do you think `love` is than `lyrics`? How much smaller is it really?)
+
+
+## One approach
+
+```{r}
+love <- lyrics %>%
+  filter(str_detect(Lyrics, "lov"))
+dim(love)
+```
+
+
+
+## Trump tweets
+
+David Robinson wrote this great [blog post](http://varianceexplained.org/r/trump-tweets/) about Trump's tweets. It's also a great walkthrough of some text analysis! We're going to try it on our own data. 
+
+
+## Words
+
+```{r}
+library(tidytext)
+lyricwords <- lyrics %>%
+  unnest_tokens(word, Lyrics, token = "words") %>%
+  filter(!word %in% stop_words$word,str_detect(word, "[a-z]"))
+lyricwords %>%
+  select(Song, Artist, word)
+```
+
+
+## Common words
+```{r}
+library(ggplot2)
+wordcounts <- lyricwords %>%
+  group_by(word) %>%
+  summarize(uses = n())
+wordcounts <- wordcounts %>%
+  arrange(desc(uses)) %>%
+  slice(1:20) 
+
+wordcounts %>%
+  ggplot() + geom_bar(aes(x=reorder(word, uses), y=uses),stat = "identity")
+
+#  ggplot() + geom_bar(aes(x=word, y=uses),stat = "identity")
+```
+
+## Stop words
+
+```{r}
+data(stop_words)
+head(stop_words)
+```
+
+## We can make our own list of the stop words
+
+```{r}
+morewords <- data.frame(word = c("im", "aint", "dont"), lexicon = "MM")
+lyricwords <- lyricwords %>%
+  filter(!word %in% morewords$word)
+```
+
+## Now you do it-- what were the most popular words per year?
+What about the most popular by decade? 
+
+## One approach
+```{r}
+decadelyrics <- lyricwords %>%
+  mutate(decade = (Year %/% 10) * 10)
+wordcounts <- decadelyrics %>%
+  group_by(word, decade) %>%
+  summarize(uses = n()) 
+
+popular <- wordcounts %>%
+  group_by(decade) %>%
+  slice(which.max(uses))
+
+wordcounts %>%
+  arrange(decade, desc(uses)) 
+```
+
+
+## Sentiment analysis
+```{r}
+nrc <- sentiments %>%
+  filter(lexicon == "nrc") %>%
+  dplyr::select(word, sentiment)
+```
+
+```{r}
+years <- lyricwords %>%
+  group_by(Year, Song, word) %>%
+  mutate(total_words = n()) %>%
+  ungroup() %>%
+  distinct(Year, word, total_words)
+```
+
+```{r}
+by_source_sentiment <- years %>%
+  inner_join(nrc, by = "word") %>%
+  group_by(Year, sentiment) %>%
+  summarize(total = sum(total_words)) %>%
+  group_by(Year) %>%
+  slice(which.max(total))
+
+by_source_sentiment %>%
+  arrange(desc(total)) 
+
+# Doesn't make sense anymore
+# by_source_sentiment <- by_source_sentiment %>%
+#   mutate(binom = if_else(sentiment =="positive",1,0))
+
+p1 <- ggplot(by_source_sentiment, aes(x=Year, y=sentiment)) + geom_point() 
+p1 
+
+# p2 <- ggplot(by_source_sentiment, aes(x=Year, y=binom)) + geom_point() + geom_smooth(aes(y=binom), method="glm", method.args = list(family = "binomial"), se=FALSE, fullrange=TRUE)+xlim(1960, 2040)
+# p2
+```
+
+## Are songs getting longer or shorter?
+
+## One approach
+
+```{r}
+lyrics <- lyrics %>%
+  mutate(lyrchar = str_length(Lyrics))
+
+lettery <- lyrics %>%
+  group_by(Year) %>%
+  summarize(songlength = mean(lyrchar, na.rm=TRUE))
+ggplot(lettery) + geom_line(aes(x=Year, y=songlength)) + ylab("Number of letters in lyrics")
+```
+
+## Another approach 
+
+```{r}
+wordy <- lyrics %>%
+  unnest_tokens(word, Lyrics, token = "words") %>%
+  group_by(Song, Year) %>%
+  summarize(length=n()) %>%
+  group_by(Year) %>%
+  summarize(songlength = mean(length, na.rm=TRUE))
+ggplot(wordy) + geom_line(aes(x=Year, y=songlength)) + ylab("Number of words in lyrics")
+```
+
+## Repetitive words
+
+```{r}
+repetitive <- lyricwords %>%
+  group_by(Artist, Song, word) %>%
+  summarize(n=n()) %>%
+  arrange(desc(n)) 
+repetitive %>% select(word, n, Song, Artist)
+```
+
+## Vocabulary size
+
+```{r}
+uniques <- lyricwords %>%
+  filter(!str_detect(Artist, "featuring")) %>%
+  filter(word != "instrumental") %>%
+  group_by(Song, Artist) %>%
+  summarize(n = length(unique(word))) %>%
+  arrange(desc(n))
+uniques
+```
+
+## Try it with project Gutenberg data
+Jordan gave us already-counted words from Project Gutenberg books! 
+
+Either: go to a url, like [http://www.science.smith.edu/~jcrouser/data/burton-arabian-363.txt](http://www.science.smith.edu/~jcrouser/data/burton-arabian-363.txt) and change the `.txt` to `.csv` to download data. 
+
+```{r}
+arabian <- read_csv("burton-arabian-363.csv")
+```
+
+Or
+
+```{r}
+webData <- getURL("http://www.science.smith.edu/~jcrouser/data/alice.csv")
+alice <- read_csv(webData)
+```

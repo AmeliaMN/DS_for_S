@@ -1,0 +1,399 @@
+---
+title: "Intro to R"
+author: "Amelia McNamara"
+date: "3/12/2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Some background info
+
+R has a bit of a learning curve but once you get used to it, you’re off to the races. Keep in mind you will get a ton of errors while you’re learning R — in fact, you’ll still deal with errors even if you’re a master user! Google is your friend — copy and paste the error into Google and see what others have written.
+
+**PRO TIP**: R is VERY VERY VERY case-sensitive. A misplaced capital letter or double-quote where there should be a single-quote might just be the culprit to your error.
+
+And don’t forget — save EVERYTHING! RStudio allows you to save your data, your scripts, your history, your entire RStudio workspace — save it all and save often.
+
+## RStudio 
+RStudio is a great interface to the R language. The interface has 4 panes. 
+
+You’ll do your coding in the **Console** (lower left, looks like Terminal/command line). 
+
+The **Environment and History** (upper right) panes keep track of everything you have loaded into your environment (mostly, data) and all the R commands you have ever typed. This is great because you can search through your past code to find commands you may have forgotten.  
+
+## 
+
+The **Source** pane is on the upper left and displays your data tables, as well as any documents you are reading or editing (maybe, you're looking at this document there!). 
+
+The **Files/Plots/Packages/Help/View** pane on the lower right does a bunch of stuff — holds files, displays the graphs you’ve made, shows the packages you have installed, and more. Perhaps the most important tab of that lower right pane is Help. R has two help functions. Forget what an average or mean is? Try this.
+
+```{r, eval=FALSE}
+?mean
+```
+or
+```{r, eval=FALSE}
+help(mean)
+```
+
+## Packages and syntax 
+
+R has "base" functionality that is built into the language, but most of the good stuff comes from user-written "packages" that extend the language. We'll be using the `mosaic`, `ggplot2` and `dplyr` packages in this class, among others. Because R is open source (and was written by statisticians...) it has some strange features compared to other programming languages. The most obvious is that its syntax is not consistent. Almost any task you want to do, there are three ways to accomplish. And packages can contribute to this nonsense by providing their own syntax. We'll try to point to places where the code we are showing you is just one of many ways to do something, but know that when you start googling questions you may see things that don't look familiar. Don't be afraid!
+
+## Loading packages
+
+To use a package, you have load it into your session by using the `library()` command. Lets start by loading some packages:
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(mosaic)
+```
+
+## Data!
+Later in this class, we will show you how to load in external data, but for now we are going to begin by playing with some data that comes with R. This will allow us to start playing quickly.
+
+We'll start with some data about midwest demographics. To get started, you can read the data in with the `data()` command, and see the first few rows with `glimpse()`.
+
+```{r}
+data(midwest)
+glimpse(midwest)
+```
+For a spreadsheet-like experience of your data, just click on its name in your `Environment` tab to see a preview of the data in the Source pane. Note that you can only look, you can't "touch." R is a programming language, so if you see values you want to have changed, or you need to add another variable based on an existing one you have to do so programmatically. 
+
+If you want to read about all the variables that are included in the dataset, you can run
+```{r}
+?midwest
+```
+or
+```{r}
+help(midwest)
+```
+
+## First glance at the data
+
+A few more handy functions that have to do with datasets are `str()`, which tells you about the **str**ucture of your data,
+```{r}
+str(midwest)
+```
+
+## 
+
+and `summary()`, which provides a summary.
+```{r}
+summary(midwest)
+```
+
+## Names of variables
+
+You can also get the list of variable names using the `names()` function,
+```{r}
+names(midwest)
+```
+
+
+## Summary statistics
+Another part of exploratory data analysis is finding summary statistics. We'll be using `dplyr` to do "tidy" computations, so we'll use the pipe to bring data into a `summarize()` command. 
+
+```{r}
+midwest %>% 
+  summarize(mean(popblack))
+```
+
+Other than `mean()` you can try `median()` `min()` `max()` `sd()` and many more. 
+
+## Summary statistics broken down
+
+If you have two variables and want to see their relationship, you can `group_by()` one and then summarize. For example,
+```{r}
+midwest %>%
+  group_by(inmetro) %>%
+  summarize(mean(popblack))
+```
+
+1. Do metro areas have larger percentages of whites than rural areas? How do you know?
+
+## Categorical data
+For categorical data, `n()` is useful,
+```{r}
+midwest %>%
+  group_by(inmetro) %>%
+  summarize(n=n())
+```
+
+## 
+
+And, `n()` can be used to count two variables together,
+```{r}
+midwest %>%
+  group_by(inmetro, category) %>%
+  summarize(n=n())
+```
+
+
+## Tips and tricks
+
+- The **up arrow** on your keyboard will allow you to scroll up through your past commands. I use this a lot-- if I type a function and it didn't work, I'll hit the up arrow and edit what I had from before. 
+- The **tab key** on your keyboard will help you (particularly in RStudio) by offering ways to finish your code. If you start typing `mea` and hit tab, it will suggest `mean()` among other things. If you type `mean(~hwy, data=vehicles,` and hit tab, it will tell you the other arguments you can use for the `mean()` function. 
+- When working within a .R or .Rmd file, you can put your cursor on a line and hit **Cntrl + Enter** to get the code to execute in the Console. (On a mac, **Command + Enter**.)
+- If you get stuck with some syntax (usually, mismatched parentheses or quotes), the R Console will change from the `>` at the beginning of the line (which means it is waiting for a new command) to the `+` at the beginning of the line (which means it is waiting for you to finish a command). To get out, hit the **Escape** key. 
+
+## Sorting and ordering
+Maybe we're working on a story about the county in the midwest that has the largest percentage of black people. We can use the `arrange()` function to see this.
+```{r}
+midwest %>% 
+  arrange(percblack)
+```
+
+## Sorting in decreasing order
+But, this is sorting in increasing order, and we want in decreasing order. We could look in the documentation for `arrange()` to see how to change this.
+```{r}
+midwest %>% 
+  arrange(desc(percblack))
+```
+
+2. What county has the largest American Indian population (in absolute numbers)?
+
+
+## Loading Data
+Most of the time, you won't be working with data sets available through packages and will need to import data in to R. RStudio makes this very simple. On the **Environment** pane (upper right corner), the **Import Dataset** icon provides a step-by-step process to importing files. Following those steps will not only import the data, but print out the code in the **Console** showing how it was done.
+
+## Loading data programmatically 
+
+```{r}
+library(readr)
+docs <- read_csv("../Data/PartD_Providers.csv")
+```
+
+To import this data set, we used the `read_csv()` function. The key part of this command is making sure that you direct the command to where the file is located on your computer. Check other functionality of `?read_csv` if you have questions.
+
+## Tips for loading data
+
+> **Note:** The way file directories are referenced in R varies between a Mac and PC. 
+
+> MAC file directories follow this protocol use "~/file_location"
+
+> PC versions would follow this: "C:\file_lcocation\"
+
+## Looking at the new data
+Let's see what our data looks like to make sure it imported correctly. Remember, the `str()` command tells you the structure of your data.
+```{r}
+str(docs)
+```
+
+The data appears to have imported correctly for each field. 
+
+##
+
+We can move on to some basic summary statistics.
+```{r}
+summary(docs)
+```
+
+
+Sometimes, we want to use existing data to create new variables. Take the **CLAIM_COUNT** and **BRAND_COUNT** fields. We know the total number of claims each doctor has approved and how many of those claims were filled with brand name drugs. We need to divide **BRAND_COUNT** by **CLAIM_COUNT**. We can use `mutate()` to create a field in our data called **BRAND_PCT** with this ratio.
+
+```{r}
+docs <- docs %>%
+  mutate(BRAND_PCT = BRAND_COUNT/CLAIM_COUNT)
+```
+
+
+## Checking our work
+
+we can use `glimpse()` and `str()` to take a look at the data field we just created.
+
+```{r}
+glimpse(docs)
+```
+
+##
+
+```{r}
+str(docs)
+```
+
+
+
+## Overwriting variables
+
+While the ratio is correct, if you'd prefer to have it look more like a percentage by multiplying the ratio by 100. We can simply overwrite the existing data we just created.
+
+```{r}
+docs <- docs %>%
+  mutate(BRAND_PCT = (BRAND_COUNT/CLAIM_COUNT)*100)
+
+glimpse(docs)
+```
+
+
+## Filtering data with dplyr
+Now this has been interesting, but in many cases we want to pull out specific pieces of our data. What if we're only interested in doctors in Colorado. We can do this with the `filter()` function, which is part of the `dplyr` package. Remember, if this is our first time using `dplyr` this session we need to load it using `library()` first.
+
+```{r}
+library(dplyr)
+```
+
+## Filtering
+
+This is how the filter function works. `data %>% filter(variable you want to filter on)`. If we do this, it will simply print the results in the **Console**. We can also assign the results to a new dataframe. To find only doctors from Colorado:
+
+```{r}
+colorado_docs <- docs %>%
+  filter(STATE == "CO")
+```
+
+You don't have to be limited by one variable. Earlier we looked at high-cost prescribers. Perhaps, we'd like to do that just for Colorado doctors. We can use the `&` to to look at all Colorado doctors who have 
+
+
+## BOOLEANS 
+
+In R we can use two types of Boolean characters 
+
+**AND** represented by **&**
+
+**OR** represented by **|**
+
+**&** limits our filter because both criteria must be met. **|** broadens our filter. If either criteria is met the data is included.
+
+## Filtering using AND
+
+The above code shows doctors just from Colorado who also exceeded $500,000 in costs. Below would give doctors who either are from Colorado or have a cost that exceeds $500,000 and could be from any state.
+
+```{r}
+colorado_high <- docs %>%
+  filter(STATE == "CO" & COST_SUM > 500000)
+```
+
+## 
+
+Now we can view the new data set we created in our **Environment** or order by using `arrange()` which you learned earlier
+
+```{r}
+colorado_high %>% 
+  arrange(desc(COST_SUM))
+```
+
+## Grouping with dplyr
+That's helpful, but what if you want to get a sense of the average salary or total number of doctors in each state. In Excel you might use a PivotTable, in SQL you'd used a "Group By" query. In `dplyr` the syntax is very similar to SQL with the `group_by()` and `summarise()` functions.
+
+You'll do this in two steps. First, decide which variables to put in to the `group_by` function. 
+```{r}
+state_group <- docs %>% 
+  group_by(STATE)
+```
+
+##
+
+Then use what you just created to summarise our data and then view the result.
+```{r}
+state_docs <- state_group %>%
+  summarise(count = n(),
+            median_cost = median(COST_SUM)
+            )
+
+state_docs
+```
+
+## Summarizing
+
+You can add as many summary statistics as you want.
+```{r}
+state_docs <- state_group %>%
+  summarise(count = n(),
+            median_cost = median(COST_SUM),
+            total_cost = sum(COST_SUM),
+            high_cost = max(COST_SUM),
+            sd_cost = sd(COST_SUM),
+            median_scripts = sum(CLAIM_COUNT),
+            total_scripts = sum(CLAIM_COUNT)
+            )
+```
+
+## Grouping by multiple variables
+
+If you decided you wanted to group by more than one variable, just add it to the function, separating each variable by a comma. To group by city and state would be: 
+
+```{r}
+state_group <- docs %>%
+  group_by(CITY, STATE)
+```
+
+Then, just re-run the summarise function. 
+```{r}
+state_docs <- state_group %>%
+  summarise(count = n(),
+            median_cost = median(COST_SUM),
+            total_cost = sum(COST_SUM),
+            high_cost = max(COST_SUM),
+            sd_cost = sd(COST_SUM),
+            median_scripts = sum(CLAIM_COUNT),
+            total_scripts = sum(CLAIM_COUNT)
+            )
+```
+
+## Chaining multiple operations together
+
+You can also accomplish the same thing in one "step" by chaining together multiple operations with the pipe.
+
+```{r}
+state_docs <- docs %>%
+  group_by(CITY, STATE)%>%
+  summarise(count = n(),
+            median_cost = median(COST_SUM),
+            total_cost = sum(COST_SUM),
+            high_cost = max(COST_SUM),
+            sd_cost = sd(COST_SUM),
+            median_scripts = sum(CLAIM_COUNT),
+            total_scripts = sum(CLAIM_COUNT)
+            )
+```
+
+
+## Questions
+
+- How many doctors' claims are entirely brand name drugs?
+
+## Other syntaxes
+We've shown you several R functions, but keep in mind. If you Google for an answer, you may see different ways to do things. The syntax for R's base package requires users to use a **$** to separate the data frame from the variable:
+
+   **[data_frame]$[variable]**
+
+So for example, if you want to find the median of the **CLAIM_COUNT** in the **colorado_high** data frame:
+
+```{r} 
+median(colorado_high$CLAIM_COUNT)
+```
+
+## Base R plotting
+
+Similarly, the base package comes with it's own charting library. So we can create a histogram ```hist()```
+
+```{r} 
+hist(colorado_high$CLAIM_COUNT)
+```
+
+## 
+
+or simply plot values ```plot(x, y)```:
+```{r} 
+plot(colorado_high$CLAIM_COUNT, colorado_high$BRAND_COUNT)
+```
+
+
+## R as a calculator
+
+```{r}
+2+4
+```
+
+R follows standard mathematical order of operations **(PEMDAS)**. So, this:
+```{r}
+2+4*3^2
+```
+
+gives you a different result than this:
+```{r}
+(2+4)*3^2
+```

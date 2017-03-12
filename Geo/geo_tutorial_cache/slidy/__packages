@@ -1,0 +1,10 @@
+base
+leaflet
+readr
+dplyr
+sp
+rgdal
+ggplot2
+ggmap
+bitops
+RCurl

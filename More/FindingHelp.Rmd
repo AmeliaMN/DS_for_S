@@ -1,0 +1,36 @@
+---
+title: "FindingHelp"
+author: "Amelia McNamara"
+date: "3/12/2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Using google to solve all your problems
+In the session, two things came up.
+- Someone wanted to change the axis labels in their `qplot()` so it wasn't scientific notation
+- Someone asked how you get comfortable doing R on your own. 
+
+The answer to both those questions is, "google." So, lets take the axis label question as an example. I didn't remember how to do this (even though I use `ggplot2` a lot), so I googled
+
+> change axis labels ggplot2 
+
+Looking at the results, I tried clicking on the third result, [How to format your chart and axis titles in ggplot2](http://www.r-bloggers.com/how-to-format-your-chart-and-axis-titles-in-ggplot2/). This didn't turn out to be super useful, so I changed my query to
+
+> change axis labels ggplot2 scientific notation
+
+In this search, the first result was [How do I change the formatting of numbers on an axis with ggplot?](http://stackoverflow.com/questions/11610377/how-do-i-change-the-formatting-of-numbers-on-an-axis-with-ggplot)
+
+I read through the question and the comments, and was reminded of the `scales` package. So, I installed it and required it
+```{r}
+install.packages("scales")
+require(scales)
+```
+Then, I tried some new code
+```{r}
+qplot(COST_SUM, data = docs, geom = "histogram") + scale_x_continuous(labels = comma) 
+```
+and that was what I wanted!

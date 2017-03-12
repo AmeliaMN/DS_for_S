@@ -1,0 +1,299 @@
+---
+title: "Data wrangling"
+author: "Amelia McNamara"
+date: "3/12/2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(mosaic)
+library(tidyr)
+```
+
+## Reshaping data to be tidy
+
+Sometimes, the data you get is in the wrong "shape." Recall that at the beginning of the day we talked about "tidy" data-- data where every row is an observation at the same observational level, and every column is a variable. I usually think about this as rectangular data, but people will sometimes also call tidy data "tall" and un-tidy data "wide."
+
+We actually have a great example of this on baseball data
+```{r, message=FALSE}
+FantasyBaseball <- read_csv("..Data/FantasyBaseball.csv")
+head(FantasyBaseball)
+```
+
+Here, each row is a round and each variable is a person. That doesn't make a ton of sense. We would prefer to think about each row as a person, with variables for the round and their time for that round. We can use the `gather`/`spread` functions from `tidyr` to fix this.
+
+## Playing with tidyr
+
+I usually don't get this right on the first try, so I run a few variations in my Console and just keep the one that looks the way I want. To remember which function I want, I look at the documentation
+```{r, eval=FALSE}
+?spread
+?gather 
+```
+The documentation for `gather` says it "takes multiple columns and collapses into key-value pairs." That's what we want here. 
+
+```{r, eval=FALSE}
+gather(FantasyBaseball, Player, Time, Round) #nope! That's even worse than before!
+gather(FantasyBaseball, Time, Round) #almost right 
+gather(FantasyBaseball, Player, Time, -Round) #what we want
+```
+
+## Overwriting with the correct version
+
+Once I've identified the way I want my data to look, I can overwrite the original data with my gathered version,
+```{r}
+FantasyBaseball <- FantasyBaseball %>%
+  gather(Player, Time, -Round) 
+head(FantasyBaseball)
+```
+
+Now it looks the way I would like!
+
+## read_csv is better than read.csv
+
+```{r}
+doctorsDot <- read.csv("../Data/Physicians.csv")
+str(doctorsDot)
+```
+This example illustrates one issue with using `read.csv()`-- it wants to make everything into factors, which we don't want! I'll keep that data around to show something later on. 
+
+```{r}
+library(readr)
+doctors <- read_csv("../Data/Physicians.csv")
+str(doctors)
+```
+
+See how this is better? It's making the variables character vectors, which makes more sense. 
+
+
+#### Renaming variables
+
+The variable names in this dataset are going to be hard to use,
+```{r}
+names(doctors)
+```
+
+In order to run something like `favstats()`, we'd have to use backtics to write out the variable name.
+
+```{r}
+library(mosaic)
+favstats(~`Physicians per 100,000 Population`, data=doctors)
+```
+
+So, let's rename that variable.
+
+```{r}
+doctors <- doctors %>%
+  rename(Physicians = `Physicians per 100,000 Population`)
+names(doctors)
+```
+That's better! 
+
+#### Searching for strange issues in variables
+But, we've still got a variable type issue. When we run summary statistics, R complains because there is something weird in the data. Let's try `tally()`ing up the values in the data. 
+
+```{r}
+tally(~Physicians, data=doctors)
+```
+
+Now we see it! There's a strange NA value that R doesn't know how to deal with. We can actually add this into our data-reading-in code.
+
+```{r}
+doctors <- read_csv("../Data/Physicians.csv", na = c("", NA, "N/A"))
+```
+Of course, we have to redo our renaming. 
+```{r}
+doctors <- doctors %>%
+  rename(Physicians = `Physicians per 100,000 Population`)
+```
+
+```{r}
+favstats(~Physicians, data=doctors)
+```
+
+Much better! 
+
+#### The importance of variable types
+
+```{r}
+mean(~Physicians, data=doctors, na.rm=TRUE)
+```
+
+That makes sense, on average states have about 430 doctors. But what if we had used our data from `read.csv()`?
+
+```{r}
+mean(~Physicians.per.100.000.Population, data=doctorsDot, na.rm=TRUE)
+```
+
+It doesn't work because it's a factor, so we might want to convert it to a numeric vector. The most intuitive thing (that doesn't do what you want!!) would be
+
+```{r, background = 'red'}
+mean(~as.numeric(Physicians.per.100.000.Population), data=doctorsDot, na.rm=TRUE)
+```
+
+Now that number *doesn't* make sense, but it's also not so weird it would really catch your attention. It turns out what R does when you run `as.numeric()` on a factor variable is it turns each "label" (like 514 for the number of doctors in Alaska) into a number, based on where it is in the order of the factor levels (so, 514 turns into 45). 
+
+It turns out you can get the appropriate results by nesting `as.numeric()` and `as.character()`,
+
+```{r, background = 'red'}
+mean(~as.numeric(as.character(Physicians.per.100.000.Population)), data=doctorsDot, na.rm=TRUE)
+```
+
+but it's much easier to just start with data from `read_csv()`. 
+
+#### Filtering data
+We might not want to keep all the data in our dataset. By looking at 
+
+```{r}
+tally(~State, data=doctors)
+```
+
+I can see that `All US` is included, as is `Puerto Rico`. Let's remove those. 
+
+```{r}
+doctors <- doctors %>% 
+  filter(State != "All US", State != "Puerto Rico")
+tally(~State, data=doctors)
+```
+
+That did it. 
+
+
+#### Merging/joining data
+Let's load in some more data. This data is about police killings in different states
+
+```{r}
+policekillings <- read_csv("sample_data/policekillings.csv")
+str(policekillings)
+```
+
+It doesn't have many data issues. But, say we wanted to merge it with our physicians data. We need a variable to "join on." That is, something that R can use to match up which row in `doctors` goes with which row in `policekillings`. Unfortunately, `doctors` has state names written out and `policekillings` just has the state abbreviations. We need to change one to match the other. 
+
+```{r}
+policekillings <- policekillings %>%
+  mutate(state = state.name[match(state, state.abb)])
+str(policekillings)
+```
+
+This works because `state.abb` is a list of all the state abbreviations and `state.name` is a list of all the full state names. Both come built in to R. 
+
+Now, we can do some joining. After all, if we want to understand the relationship between physicians and police killings, we have to have both variables in the same data frame. The command that allows you to combine data frames is a "join", which corresponds to the database operation called a `JOIN`. 
+
+When two database tables (or data frames) are joined, the rows of one table get matched to the rows of the other. Computers are exceptionally better suited for this task than humans, but the computer needs to be told what the criteria is for matching up the rows. The variable(s) upon which the matching is based are called a **key**. Both tables must contain the key columns, but there are variety of ways in which the matching can be done. 
+
+Joins can be complicated, so you may want to look at a visual explanation:
+
+- [visualization of database JOINs](http://www.codinghorror.com/blog/2007/10/a-visual-explanation-of-sql-joins.html) 
+- [shiny app about R joins](https://beta.rstudioconnect.com/content/1867/)
+- [data wrangling cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)
+
+Before we start, let's consider the dimensions of our two data frames.
+```{r}
+dim(policekillings)
+dim(doctors)
+```
+They don't have the same number of rows, so we should think about how large we want our data to be at the end of our join. Do we want to keep all 51 rows in `doctors` and match elements from `policekillings`, filling with NA values where there aren't matches? Or, are we more interested in `policekillings` and we want to just match the 47 states with elements from `doctors`?
+
+In databases, the default JOIN type is INNER JOIN. In this case only the rows that are present in *both* data frames get returned. In R, I find I most often use a `left_join`, which retains *all* of the records from the first data frame, regardless of whether there is a match in the second data frame. 
+
+There are also A right joins, which retain *all* of the records from the second data frame, regardless of whether there is a match in the first data frame, and full joins, which contain all of the records from *both* data frames, regardless of whether there was a match. [Note that the number of rows returned can exceed the number of rows in either of the two original data frames.]
+
+
+For this application, let's try a `left_join`. 
+
+```{r, error=TRUE}
+joinedData <-  left_join(policekillings, doctors)
+```
+
+This throws an error, because it is expecting there to be a variable with the same name in each data set. To get it to work, we need to specify which variables to join on. 
+
+```{r}
+joinedData <-  left_join(policekillings, doctors, by = c("state"= "State"))
+str(joinedData)
+```
+
+Notice that this dataset only has 47 observations, because there were only 47 in `policekillings` (the "left" in our `left_join`). We could have reversed the order of the datasets to get something slightly different.
+
+```{r}
+joinedData <- left_join(doctors, policekillings, by = c("State"= "state"))
+str(joinedData)
+```
+Now, the data has 51 observations! (We could have gotten the same result by running `right_join` with the data specified the same way as our first join.)
+
+
+
+#### Filtering and recoding data
+For another example, consider this data about political opinions. 
+
+```{r}
+politics <- read_csv("../Data/politics.csv")
+str(politics)
+```
+
+We might want to filter the data to only include the observations from Bulgaria. So, we could use a `filter()` to filter out the data.
+
+```{r, error=TRUE}
+politics <- politics %>%
+  filter(Country == "Bulgaria")
+```
+
+This doesn't work, and the error message is a little obscure. I had to [google it](https://www.google.com/search?q=attempt+to+use+zero-length+variable+name&oq=attempt+to+use+zero-length+variable+name&aqs=chrome..69i57j0l5.391j0j4&sourceid=chrome&ie=UTF-8)! Looking at those results, I saw [one](https://github.com/hadley/dplyr/issues/1576) that mentioned `filter()`, so I checked it out. It seems like the problem is empty variable names, which we have in this dataset. 
+
+```{r}
+names(politics)
+```
+
+To fix this, we can do a rather strange renaming. Now, our filter works!
+
+```{r}
+politics <- politics %>%
+  rename(obs = )
+str(politics)
+politics <- politics %>%
+  filter(Country == "Bulgaria")
+```
+
+
+We also might want to recode `Left_Right_Wing` to be a binary variable.
+
+```{r}
+politics <- politics %>%
+  mutate(LRbinary = if_else(Left_Right_Wing>5, "right", "left"))
+str(politics)
+```
+
+
+
+#### String operations
+I didn't have a great example from your data appendices here, but string operations are often important for data cleaning. What will help you here is the `stringr` package and the `gsub()` function. The `parse_numeric()` function from `readr` can also be very helpful. 
+
+This code removes Xs from the front of the Year variable. 
+
+```{r, eval=FALSE}
+library(stringr)
+popLong <- popLong %>%
+  mutate(Year = as.numeric(gsub("X", "", Year)))
+```
+
+This code fixes an issue in the `population` column, which contains commas that separate the thousands places in what are supposed to be numeric values. We can fix this by using the *gsub()* command to remove them all at once. 
+
+```{r, eval=FALSE}
+popLong <- popLong %>%
+  mutate(population = as.numeric(gsub(",", "", population)))
+```
+
+
+#### Exporting the Data
+
+Now that we've spent all this time getting our data into the right format, we want to write it to a file so that we never have to do this again! The opposite of `read_csv` is `write_csv` and it does exactly that. 
+
+```{r, eval=FALSE}
+write_csv(policekillings, "policekillings.csv")
+```
+
+
+
+

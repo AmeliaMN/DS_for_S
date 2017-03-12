@@ -1,0 +1,7 @@
+base
+knitr
+ggplot2
+lubridate
+dplyr
+scales
+ggmap

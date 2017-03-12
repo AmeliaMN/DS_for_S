@@ -1,0 +1,15 @@
+base
+readr
+igraph
+GGally
+network
+statnet.common
+sna
+intergraph
+scales
+dplyr
+networkD3
+ggplot2
+ggraph
+forcats
+bertin

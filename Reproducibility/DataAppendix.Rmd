@@ -1,0 +1,65 @@
+---
+title: "Data Appendix"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data
+
+```{r, message=FALSE, warning=FALSE}
+# install.packages("readr")
+library(readr)
+library(mosaic)
+collegedata <- read_csv("~/collegedata.csv")
+```
+
+
+## Structure and names
+
+```{r}
+str(collegedata)
+```
+
+There are 10 variables in the data, and 81 observations. The variables are:
+
+- an unnamed variable that seems to just be row numbers
+- `rank` contains the rank of schools (integer)
+- `score` contains the score of each school (integer)
+- `name` is a `chr` string of each school's name.
+- `location` is a `chr` string of the city and state of each school
+- `tuitionAndFees` is a `chr`, including dollar signs and commas. More useful would be as a numeric variable with dollar amounts
+- `totalEnrollment` is an `int`
+- `fall2013AcceptanceRate` is a numeric variable
+- `averageFreshmanRetentionRate` is a numeric variable
+- `sixYearGraduation rate` is a numeric variable
+
+Other than `tuitionAndFees` the variable types make sense to me. All of these variable names are pretty self-explanatory, although I might want to rename the first column or remove it altogether. 
+
+## Variable analysis
+
+```{r}
+favstats(~rank, data=collegedata)
+```
+Minimum rank is 1, max is 75, no missing data. This all makes sense.
+
+```{r}
+favstats(~score, data=collegedata)
+```
+Minimum is 49 (need to look in to what this means) maximum is 100 (makes sense!). No missing data.
+
+```{r, eval=FALSE}
+tally(~name, data=collegedata)
+```
+Tried this and it is just a bunch of 1s and school names. 
+
+
+**Etcetera**
+
+## Most pressing data cleaning issues
+
+- Need to work on removing dollar signs and commas from `tuitionAndFees`. 
+- Need to look into whata score of 49 is and whether it makes sense. 
+- Might want to split out just the state names from `location` so we can use state as a variable. 

@@ -1,0 +1,16 @@
+base
+readr
+ggplot2
+bitops
+RCurl
+knitr
+lubridate
+dplyr
+scales
+ggmap
+lattice
+mosaicData
+Matrix
+mosaic
+hexbin
+RColorBrewer

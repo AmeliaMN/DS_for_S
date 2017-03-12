@@ -1,0 +1,215 @@
+---
+title: "Googlesheets"
+output:
+  html_document:
+    css: lab.css
+    highlight: pygments
+    theme: cerulean
+  pdf_document: default
+---
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+require(knitr)
+opts_chunk$set(eval=FALSE)
+```
+
+
+```{r, message=FALSE}
+require(mosaic)
+require(googlesheets)
+require(tidyr)
+```
+
+
+```{r}
+gdp_url <- "https://docs.google.com/spreadsheets/d/1RctTQmKB0hzbm1E8rGcufYdMshRdhmYdeL29nXqmvsc/pub?gid=0"
+gdp_ss <- gdp_url %>% gs_url(lookup = FALSE)
+gdp <- gdp_ss %>% gs_read(range = cell_limits(c(1, 1), c(276, 34)))
+
+head(gdp)
+dim(gdp)
+n1 <- nrow(gdp)
+k1 <- ncol(gdp)
+```
+
+This file is in a Gapminder-style format, where the each row corresponds to a country, and each column corresponds to a year. The entire data frame only contains information about *one* variable. In order to work with this data, we need to have all the data on that one variable in a single vector. `gather` and `spread` are the R functions that allow us to do that. 
+
+The basic idea is that we will be transforming an $n \times k$ data frame into a data frame of length $nk$ and just three columns, but we need to pay careful attention to the row and column names. 
+
+#### Reshape
+
+Our data is in **wide** format, so-called because the number of columns is large. This format is handy for reading, but inefficient for a computer to store and search. We'll transform this data frame into **long** format using `gather`. 
+
+```{r}
+gdp <- gdp %>%
+  rename(Country = Income.per.person..fixed.2000.US..)
+# names(gdp)[1] <- "Country"
+gdpLong <- gather(gdp, key = Year, value = gdp, -Country)
+dim(gdpLong)
+n1 * (k1 - 1)
+head(gdpLong)
+```
+
+In this case, the country's name was in the first column, so the number of rows in the long format is multiplied by $k-1$ instead of $k$. The vector of data occupies the 3rd column in the long format data frame, while the variables that uniquely determine those values (`Country` and `Year`) occupy the first two columns. This is the notion of a *key* that we will return to later. 
+
+Notice that all of the `Year` values start with "X". This is because R can't handle column names that start with a number, so when the data file was read it automatically prepended an "X". But now the "X" is in our variable so we want to remove it. 
+
+```{r}
+# Replace all the X's with nothing, and then interpret the result as a number
+gdpLong <- gdpLong %>%
+  mutate(Year = as.numeric(gsub("X", "", Year)))
+summary(gdpLong)
+```
+
+R will perform different operations on different types of vectors, so it is important to understand the difference. 
+
+```{r}
+mean(~Year, data=gdpLong)
+mean(~factor(Year), data=gdpLong)
+mean(~gdp, data=gdpLong)
+gdpLong <- gdpLong %>%
+  mutate(gdp = as.numeric(gdp))
+mean(~gdp, data=gdpLong, na.rm=TRUE)
+```
+
+Now that we have our data in long format, we can easily pick out subsets
+
+```{r}
+gdpLong %>% 
+  filter(Country == "United States")
+```
+
+Or visualize the data
+
+```{r, fig.width=10}
+# Use type "b" for "b"oth lines and points
+xyplot(gdp ~ Year, groups=Country, data=gdpLong, type="b")
+```
+
+OK, now let's do the same thing to another data frame.
+
+```{r}
+pop.url <- "https://docs.google.com/spreadsheets/d/1IbDM8z5XicMIXgr93FPwjgwoTTKMuyLfzU6cQrGZzH8/pub?gid=1"
+pop <- pop.url %>% gs_url(lookup = FALSE)
+
+pop <- pop %>% gs_read(range = cell_limits(c(1, 1), c(276, 34)))
+
+
+head(pop)
+dim(pop)
+n2 <- nrow(pop)
+k2 <- ncol(pop)
+pop <- pop %>% 
+  rename(Country = Total.population)
+popLong <- gather(pop, key = Year, value = population, -Country)
+dim(popLong)
+n2 * (k2-1)
+popLong <- popLong %>%
+  mutate(Year = as.numeric(gsub("X", "", Year)))
+summary(popLong)
+```
+
+Note that if you have a lot of these to do, you could write a function that will process them quickly. In the long term you will probably save time by writing the function, but in the short term you may save time by doing them manually. 
+
+Here we have encountered a new problem. The `population` column contains commas that separate the thousands places in what are supposed to be numeric values. By default, R will interpret these as character strings, not numbers. One way to get around this is to go back to your data file and remove all of the commas. Another way is to use the *gsub()* command to remove them all at once. 
+
+```{r}
+popLong <- popLong %>%
+  mutate(population = as.numeric(gsub(",", "", population)))
+summary(popLong)
+```
+
+Again, we can look at subsets and visualize this data. 
+
+```{r}
+popLong %>% 
+  filter(Country == "China")
+xyplot(population ~ Year, groups=Country, data=popLong, type="b")
+```
+
+#### Merge
+
+Now that we have our data in long format, we want to combine it. After all, if we want to understand the relationship between GDP and population, we have to have both variables in the same data frame. The command that allows you to combine data frame is called `inner_join`, and it corresponds to the database operation called a `JOIN`. 
+
+When two database tables (or data frames) are joined, the rows of one table get matched to the rows of the other. Computers are exceptionally better suited for this task than humans, but the computer needs to be told what the criteria is for matching up the rows. The variable(s) upon which the matching is based are called a **key**. Both tables must contain the key columns, but there are variety of ways in which the matching can be done. 
+
+This is a nice [visual explanation](http://www.codinghorror.com/blog/2007/10/a-visual-explanation-of-sql-joins.html) of the various types of JOIN operations. 
+
+First, let's consider the dimensions of our two data frames.
+
+```{r}
+dim(gdpLong)
+dim(popLong)
+```
+
+Note that it is possible, though not necessarily guaranteed, that the rows in the population data frame are a superset of the rows in the GDP data frame. In fact, that is the case here, but for pedagogical purposes I don't want that, so I'm going to throw out countries from each table. [In general, you should not do this!]
+
+```{r}
+gdpLong <- gdpLong %>%
+  filter(Country != "Djibouti")
+popLong <- popLong %>%
+  filter(!Country %in% c("Cameroon", "Andorra"))
+dim(gdpLong)
+dim(popLong)
+```
+
+In this case we want to have a key across the two columns `Country` and `Year`. That is, each unique combination of `Country` and `Year` in the GDP data frame will get matched to the corresponding row of the population data frame. The resulting data frame will contain *both* columns, which is what we want. 
+
+The default JOIN type is INNER JOIN. In this case only the rows that are present in *both* data frames get returned. 
+
+```{r}
+ds <- inner_join(x = gdpLong, y = popLong, by = c("Country" = "Country", "Year" = "Year"))
+dim(ds)
+head(ds)
+```
+
+Note that there are fewer rows in the merged data frame than in either of the two original data frames. (Why?) Also, note that rows get reordered according the key columns. This is important because if you try to add new columns you need to make sure that they match up!
+
+A LEFT JOIN retains *all* of the records from the first data frame, regardless of whether there is a match in the second data frame. 
+
+```{r}
+ds <- left_join(x = gdpLong, y = popLong, by = c("Country" = "Country", "Year" = "Year"))
+dim(ds)
+```
+
+A RIGHT JOIN retains *all* of the records from the second data frame, regardless of whether there is a match in the first data frame. 
+
+```{r}
+ds <- right_join(x = gdpLong, y = popLong, by = c("Country" = "Country", "Year" = "Year"))
+dim(ds)
+```
+
+Finally, a FULL JOIN contains all of the records from *both* data frames, regardless of whether there was a match. Note that the number of rows returned can exceed the number of rows in either of the two original data frames. 
+
+```{r}
+ds <- full_join(x = gdpLong, y = popLong, by = c("Country" = "Country", "Year" = "Year"))
+dim(ds)
+```
+
+Finally we have both variables associated with a specific country for a specific year. This is panel data! 
+
+```{r}
+us <- ds %>%
+  filter(Country=="United States")
+xyplot(gdp ~ population, groups=Country, data=us, type=c("b", "r"))
+fm <- lm(gdp ~ population, data=us)
+summary(fm)
+fm.ge <- lm(gdp ~ population + Country, data=ds)
+summary(fm.ge)
+```
+
+
+
+#### Exporting the Data
+
+Now that we've spent all this time getting our data into the right format, we want to write it to a file so that we never have to do this again! The opposite of `read.csv` is `write.csv` and it does exactly that. 
+
+```{r, eval=FALSE}
+write.csv(ds, "gdp-pop.csv")
+```
+
+The file should then show up in your "Files" window, where you can "Export" it to your local computer if you like. 
+
+
+
+

@@ -1,0 +1,58 @@
+---
+title: "Troubleshooting in R Markdown"
+output: html_document
+---
+
+There are a few common problems that people have when working with RMarkdown. 
+
+## Document won't knit
+
+There could be many reasons for this, but the most common are:
+
+- including output in your code chunks, like 
+```{r, eval=FALSE}
+mean(~weight, data=cdc) 169.683
+```
+- including the > or + prompts that come from the console in your code chunks, like
+```{r, eval=FALSE}
+> mean(~weight, data=cdc)
+```
+ or
+```{r, eval=FALSE}
+cdc %>%
++ filter(weight>100)
+```
+- Asking R to print out an entire data set. This one is often tricky to spot, because the code will work fine in the console, saying something like "[ reached getOption("max.print") -- omitted 18684 rows ]", but in the RMarkdown it will try to include everything and then run out of memory. The easiest way to spot this is if you have included
+```{r, eval=FALSE}
+  cdc
+```
+  in your document, but also dplyr expressions that aren't saved into an object can do it, like
+```{r, eval=FALSE}
+  cdc %>%
+   filter(weight>100)
+```
+
+- Not including all the packages you need for your code. You always need to include
+```{r, message=FALSE, eval=FALSE}
+require(mosaic)
+require(oilabs)
+```
+and often you also need
+```{r, eval=FALSE}
+require(dplyr)
+```
+
+## Code not being evaluated
+
+If you have code showing up in your document like this
+```
+mean(~weight, data=cdc)
+```
+where the code isn't colored nicely and the output isn't showing, that's often because your chunk delimiters weren't specified correctly. You need three "ticks" (the key on the upper left corner of the keyboard, usually, the same one with the ~): ``` Then you need curly braces with an "r" in the middle, {r}, then a line break, then your code, and finally three more ticks. 
+
+If you're having trouble getting the formatting correct, you can always click the Chunks button at the upper right corner of the RMarkdown window and select Insert Chunk. This will do all the formatting for you.
+
+## No Knit HTML button
+
+This means that RStudio doesn't understand your document is supposed to be an RMarkdown document, often because your file extension is .txt. To fix this, go to the Files tab (lower right corner, same pane as Plots and Help) and select the checkbox next to your document's name. Then select Rename and remove the .txt and make sure the extension is .Rmd. 
+
