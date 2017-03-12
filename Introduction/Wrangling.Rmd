@@ -2,7 +2,7 @@
 title: "Data wrangling"
 author: "Amelia McNamara"
 date: "3/12/2017"
-output: ioslides_presentation
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +20,8 @@ Sometimes, the data you get is in the wrong "shape." Recall that at the beginnin
 
 We actually have a great example of this on baseball data
 ```{r, message=FALSE}
-FantasyBaseball <- read_csv("..Data/FantasyBaseball.csv")
+library(readr)
+FantasyBaseball <- read_csv("../Data/FantasyBaseball.csv")
 head(FantasyBaseball)
 ```
 
@@ -166,7 +167,7 @@ That did it.
 Let's load in some more data. This data is about police killings in different states
 
 ```{r}
-policekillings <- read_csv("sample_data/policekillings.csv")
+policekillings <- read_csv("../Data/policekillings.csv")
 str(policekillings)
 ```
 
@@ -291,7 +292,7 @@ popLong <- popLong %>%
 Now that we've spent all this time getting our data into the right format, we want to write it to a file so that we never have to do this again! The opposite of `read_csv` is `write_csv` and it does exactly that. 
 
 ```{r, eval=FALSE}
-write_csv(policekillings, "policekillings.csv")
+write_csv(policekillings, "policekillingsclean.csv")
 ```
 
 
