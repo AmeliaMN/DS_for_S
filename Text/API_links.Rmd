@@ -17,5 +17,6 @@ knitr::opts_chunk$set(echo = TRUE)
 - Lots of APIs
  - [Government data](https://www.data.gov/developers/apis) (18F)
  - [rOpenSci](http://ropensci.org/packages/#data_access)
+ - [Deck of Cards API](http://deckofcardsapi.com), a simple API to help you learn.
  - If you see a data API, there is probably an R package to access it
  - If not, you can make the package
